@@ -5,7 +5,7 @@ from slugify import slugify
 import random
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads'  # Vercel’s writable temp directory
 app.config['SONG_FILE'] = 'song.mp3'
 
 song_titles = [
@@ -23,7 +23,6 @@ def save_file(title, file):
     file_extension = file.filename.split('.')[-1]
     file_name = f"{title_slug}-{timestamp}.{file_extension}"
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-    # Ensure uploads directory exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     file.save(file_path)
     return file_name
@@ -56,10 +55,5 @@ def download_file(file_name):
     else:
         return "File not found", 404
 
-# Vercel requires this to work as a serverless function
 if __name__ == '__main__':
-    app.run()
-else:
-    # Export Flask app as a WSGI application for Vercel
-    from wsgi import application
-    app.wsgi_app = application
+    app.run(debug=True)
