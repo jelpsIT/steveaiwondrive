@@ -1,0 +1,67 @@
+<html>
+<head>
+    <title>SteveAI WonDrive</title>
+    <!-- Import Google Fonts for Fugaz One -->
+    <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&display=swap" rel="stylesheet">
+</head>
+<body style="background-color: black; display: flex; justify-content: center; align-items: center; height: 100vh;">
+    <div class="image-container" style="display: flex; flex-direction: column; align-items: center; position: relative;">
+        <img src="{{ url_for('static', filename='stevie_wonder.png') }}" alt="Stevie Wonder" width="750" height="750" id="stevieImage" style="cursor: pointer; opacity: 0.5;">
+        <span class="finger" style="position: absolute; top: 50%; right: -50px; opacity: 0; font-size: 40px;">👆</span>
+        <p class="upload-text">Click to upload</p>
+    </div>
+    <form id="uploadForm" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" style="display: none;">
+        <input type="file" id="fileInput" name="file" multiple>
+    </form>
+    <script>
+        document.getElementById("stevieImage").addEventListener("click", function() {
+            document.getElementById("fileInput").click();
+        });
+        document.getElementById("fileInput").addEventListener("change", function() {
+            document.getElementById("uploadForm").submit();
+        });
+    </script>
+    <style>
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .upload-text {
+            opacity: 0;
+            transition: opacity 0.5s;
+            color: white;
+            margin-top: 10px;
+            font-size: 24px;
+            font-family: 'Fugaz One', cursive;
+        }
+        .image-container:hover .upload-text {
+            opacity: 1;
+        }
+        /* Shake animation for image */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        .image-container:hover #stevieImage {
+            animation: shake 0.5s infinite;
+        }
+        /* Shake animation for finger */
+        @keyframes fingerShake {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        .finger {
+            transition: opacity 0.3s;
+        }
+        .image-container:hover .finger {
+            opacity: 1;
+            animation: fingerShake 0.6s infinite;
+        }
+    </style>
+</body>
+</html>
