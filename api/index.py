@@ -3,10 +3,15 @@ import os
 import time
 from slugify import slugify
 import random
-from vercel_blob import put  # Vercel Blob SDK
+from vercel_blob import put, BlobError  # Import BlobError for specific handling
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
+
+# Ensure token is available
+blob_token = os.getenv('BLOB_READ_WRITE_TOKEN')
+if not blob_token:
+    raise ValueError("BLOB_READ_WRITE_TOKEN environment variable is not set")
 
 song_titles = [
     # ===== OFFICIAL HITS =====
@@ -70,8 +75,9 @@ song_titles = [
     # Instrumental Concepts
     "rainy-day-riffage", "midnight-marimba", "organ-orgasm",
     "wurlitzer-waltz", "theremin-threnody", "kalimba-kaleidoscope",
-    "melodica-moonwalk",
+    "melodica-moonwalk"
 ]
+
 
 def get_random_title():
     return random.choice(song_titles)
@@ -89,17 +95,23 @@ def save_file(title, file):
         with open(temp_path, 'rb') as f:
             blob = put(file_name, f, {
                 'access': 'public',
-                'token': os.getenv('vercel_blob_rw_GkQLdZvMaVfTWcc2_00JI8cEIbHrZutY6P87JnRTZN0E0vj')
+                'token': blob_token
             })
         os.remove(temp_path)  # Clean up
-        # Return URL and timestamp for later deletion
         return blob['url'], timestamp
+    except BlobError as be:
+        raise Exception(f"Vercel Blob error: {str(be)}")
+    except FileNotFoundError as fnfe:
+        raise Exception(f"File handling error: {str(fnfe)}")
     except Exception as e:
-        raise Exception(f"Error uploading to Vercel Blob: {str(e)}")
+        raise Exception(f"Unexpected error saving file: {str(e)}")
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        return f"Error loading index: {str(e)}", 500
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -107,13 +119,14 @@ def upload_file():
         if 'file' not in request.files:
             return redirect(request.url)
         files = request.files.getlist('file')
+        if not files:
+            return "No files uploaded", 400
         links = []
         for file in files:
             if file.filename == '':
                 continue
             title = get_random_title()
             url, timestamp = save_file(title, file)
-            # Store URL and timestamp (for simplicity, just pass to template)
             links.append({'url': url, 'timestamp': timestamp})
         song_path = app.config['SONG_FILE']
         return render_template('upload.html', links=links, song_path=song_path)
