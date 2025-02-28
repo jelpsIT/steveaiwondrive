@@ -8,6 +8,7 @@ from vercel_blob import put, BlobError
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
 
+# Check for BLOB_READ_WRITE_TOKEN at startup
 blob_token = os.getenv('BLOB_READ_WRITE_TOKEN')
 if not blob_token:
     raise ValueError("BLOB_READ_WRITE_TOKEN environment variable is not set")
@@ -133,6 +134,10 @@ def upload_file():
 @app.route('/download/<path:file_name>')
 def download_file(file_name):
     return "Use the provided Vercel Blob link directly.", 200
+
+# Jinja2 filter for timestamp formatting
+from datetime import datetime
+app.jinja_env.filters['datetime'] = lambda ts: datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
 
 if __name__ == '__main__':
     app.run(debug=True)
