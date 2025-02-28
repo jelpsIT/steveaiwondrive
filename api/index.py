@@ -3,11 +3,10 @@ import os
 import time
 from slugify import slugify
 import random
-import requests
+from vercel_blob import put  # Vercel Blob SDK
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
-FILEBIN_API = "https://filebin.net"
 
 song_titles = [
     # ===== OFFICIAL HITS =====
@@ -71,7 +70,7 @@ song_titles = [
     # Instrumental Concepts
     "rainy-day-riffage", "midnight-marimba", "organ-orgasm",
     "wurlitzer-waltz", "theremin-threnody", "kalimba-kaleidoscope",
-    "melodica-moonwalk"
+    "melodica-moonwalk",
 ]
 
 def get_random_title():
@@ -86,18 +85,17 @@ def save_file(title, file):
         # Save temporarily to /tmp
         temp_path = f"/tmp/{file_name}"
         file.save(temp_path)
-        # Upload to Filebin
+        # Upload to Vercel Blob
         with open(temp_path, 'rb') as f:
-            response = requests.post(FILEBIN_API, files={'file': (file_name, f)})
-            response.raise_for_status()
-            # Filebin returns a JSON with the URL
-            url = response.json()['file']['url']['direct']
+            blob = put(file_name, f, {
+                'access': 'public',
+                'token': os.getenv('BLOB_READ_WRITE_TOKEN')
+            })
         os.remove(temp_path)  # Clean up
-        return url
-    except requests.RequestException as e:
-        raise Exception(f"Failed to upload to Filebin: {str(e)}")
+        # Return URL and timestamp for later deletion
+        return blob['url'], timestamp
     except Exception as e:
-        raise Exception(f"Error saving file: {str(e)}")
+        raise Exception(f"Error uploading to Vercel Blob: {str(e)}")
 
 @app.route('/')
 def index():
@@ -114,8 +112,9 @@ def upload_file():
             if file.filename == '':
                 continue
             title = get_random_title()
-            url = save_file(title, file)
-            links.append(url)
+            url, timestamp = save_file(title, file)
+            # Store URL and timestamp (for simplicity, just pass to template)
+            links.append({'url': url, 'timestamp': timestamp})
         song_path = app.config['SONG_FILE']
         return render_template('upload.html', links=links, song_path=song_path)
     except Exception as e:
@@ -123,7 +122,7 @@ def upload_file():
 
 @app.route('/download/<path:file_name>')
 def download_file(file_name):
-    return "Downloads not supported directly; use the provided Filebin link.", 200
+    return "Use the provided Vercel Blob link directly.", 200
 
 if __name__ == '__main__':
     app.run(debug=True)

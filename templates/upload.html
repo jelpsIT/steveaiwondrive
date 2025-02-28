@@ -3,48 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <title>Upload Success - SteveAI WonDrive</title>
-    <!-- Google Fonts for Fugaz One -->
     <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&display=swap" rel="stylesheet">
     <style>
-        body {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Fugaz One', cursive;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            background: linear-gradient(135deg, #1a1a1a, #333);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-            max-width: 600px;
-            width: 90%;
-        }
-        h1 {
-            font-size: 36px;
-            margin-bottom: 20px;
-            color: #ffd700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        audio {
-            margin-top: 20px;
-            width: 100%;
-            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
-        }
+        body { background-color: #000; color: #fff; font-family: 'Fugaz One', cursive; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; text-align: center; }
+        .container { background: linear-gradient(135deg, #1a1a1a, #333); padding: 30px; border-radius: 15px; box-shadow: 0 0 20px rgba(255, 255, 255, 0.1); max-width: 600px; width: 90%; }
+        h1 { font-size: 36px; margin-bottom: 20px; color: #ffd700; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); }
+        .links { margin: 20px 0; }
+        .links a { color: #00ccff; text-decoration: none; font-size: 18px; display: block; margin: 10px 0; transition: color 0.3s; }
+        .links a:hover { color: #ff00ff; }
+        audio { margin-top: 20px; width: 100%; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2)); }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Files Uploaded Successfully!</h1>
         <div class="links">
-            <p>Your Stevie-inspired links:</p>
+            <p>Your Stevie-inspired links (valid for 24 hours):</p>
             {% for link in links %}
-                <a href="{{ link }}" target="_blank">{{ link }}</a>
+                <a href="{{ link.url }}" target="_blank">{{ link.url }}</a>
+                <small>(Uploaded: {{ link.timestamp | int | datetime }})</small>
             {% endfor %}
         </div>
         <audio controls autoplay>
