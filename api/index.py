@@ -3,12 +3,11 @@ import os
 import time
 from slugify import slugify
 import random
-from vercel_blob import put, BlobError  # Import BlobError for specific handling
+from vercel_blob import put, BlobError
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
 
-# Ensure token is available
 blob_token = os.getenv('BLOB_READ_WRITE_TOKEN')
 if not blob_token:
     raise ValueError("BLOB_READ_WRITE_TOKEN environment variable is not set")
@@ -88,16 +87,14 @@ def save_file(title, file):
         timestamp = int(time.time())
         file_extension = file.filename.split('.')[-1]
         file_name = f"{title_slug}-{timestamp}.{file_extension}"
-        # Save temporarily to /tmp
         temp_path = f"/tmp/{file_name}"
         file.save(temp_path)
-        # Upload to Vercel Blob
         with open(temp_path, 'rb') as f:
             blob = put(file_name, f, {
                 'access': 'public',
                 'token': blob_token
             })
-        os.remove(temp_path)  # Clean up
+        os.remove(temp_path)
         return blob['url'], timestamp
     except BlobError as be:
         raise Exception(f"Vercel Blob error: {str(be)}")
