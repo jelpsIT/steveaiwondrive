@@ -89,7 +89,7 @@ def save_file(title, file):
         with open(temp_path, 'rb') as f:
             blob = put(file_name, f, {
                 'access': 'public',
-                'token': os.getenv('store_GkQLdZvMaVfTWcc2')
+                'token': os.getenv('vercel_blob_rw_GkQLdZvMaVfTWcc2_00JI8cEIbHrZutY6P87JnRTZN0E0vj')
             })
         os.remove(temp_path)  # Clean up
         # Return URL and timestamp for later deletion
