@@ -1,4 +1,4 @@
 Flask==2.3.3
 python-slugify==8.0.4
 Werkzeug==2.3.7
-vercel_blob>=0.23.0  # Use latest compatible version
+vercel_blob>=0.3.0  # Use latest compatible version
