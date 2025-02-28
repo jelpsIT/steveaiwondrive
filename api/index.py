@@ -89,7 +89,7 @@ def save_file(title, file):
         with open(temp_path, 'rb') as f:
             blob = put(file_name, f, {
                 'access': 'public',
-                'token': os.getenv('BLOB_READ_WRITE_TOKEN')
+                'token': os.getenv('store_GkQLdZvMaVfTWcc2')
             })
         os.remove(temp_path)  # Clean up
         # Return URL and timestamp for later deletion
