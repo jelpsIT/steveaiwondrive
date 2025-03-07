@@ -3,7 +3,7 @@ import os
 import time
 from slugify import slugify
 import random
-from vercel_blob import put, BlobError
+from vercel_blob import put
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
@@ -86,23 +86,29 @@ def save_file(title, file):
     try:
         title_slug = slugify(title)
         timestamp = int(time.time())
-        file_extension = file.filename.split('.')[-1]
+        file_extension = file.filename.rsplit('.', 1)[-1].lower()  # Safer extension extraction
         file_name = f"{title_slug}-{timestamp}.{file_extension}"
         temp_path = f"/tmp/{file_name}"
+        
+        # Save the uploaded file temporarily
         file.save(temp_path)
+        
+        # Upload to Vercel Blob
         with open(temp_path, 'rb') as f:
             blob = put(file_name, f, {
                 'access': 'public',
                 'token': blob_token
             })
+        
+        # Clean up temporary file
         os.remove(temp_path)
+        
         return blob['url'], timestamp
-    except BlobError as be:
-        raise Exception(f"Vercel Blob error: {str(be)}")
-    except FileNotFoundError as fnfe:
-        raise Exception(f"File handling error: {str(fnfe)}")
+    
     except Exception as e:
-        raise Exception(f"Unexpected error saving file: {str(e)}")
+        # Generic exception handling since BlobError isn’t available
+        raise Exception(f"Error saving file to Vercel Blob: {str(e)}")
+
 
 @app.route('/')
 def index():
@@ -111,14 +117,16 @@ def index():
     except Exception as e:
         return f"Error loading index: {str(e)}", 500
 
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     try:
         if 'file' not in request.files:
             return redirect(request.url)
         files = request.files.getlist('file')
-        if not files:
+        if not files or all(file.filename == '' for file in files):
             return "No files uploaded", 400
+        
         links = []
         for file in files:
             if file.filename == '':
@@ -126,18 +134,23 @@ def upload_file():
             title = get_random_title()
             url, timestamp = save_file(title, file)
             links.append({'url': url, 'timestamp': timestamp})
+        
         song_path = app.config['SONG_FILE']
         return render_template('upload.html', links=links, song_path=song_path)
+    
     except Exception as e:
         return f"Upload failed: {str(e)}", 500
+
 
 @app.route('/download/<path:file_name>')
 def download_file(file_name):
     return "Use the provided Vercel Blob link directly.", 200
 
+
 # Jinja2 filter for timestamp formatting
 from datetime import datetime
 app.jinja_env.filters['datetime'] = lambda ts: datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
