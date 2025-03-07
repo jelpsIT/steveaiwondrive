@@ -91,16 +91,14 @@ def save_file(title, file):
         file_extension = file.filename.rsplit('.', 1)[-1].lower()
         file_name = f"{title_slug}-{timestamp}.{file_extension}"
 
-        # Save file content temporarily
+        # Save file content temporarily and upload directly
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
             temp_path = temp_file.name
             temp_file.write(file.read())
             temp_file.flush()
             temp_file.seek(0)
-            file_content = temp_file.read()
-
-        # Upload to Vercel Blob without the 'token' argument
-        blob = put(file_name, file_content, {'access': 'public'})
+            # Pass the file object directly to put instead of reading into bytes
+            blob = put(file_name, temp_file, {'access': 'public'})
 
         # Clean up temporary file
         os.remove(temp_path)
