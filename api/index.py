@@ -4,6 +4,7 @@ import time
 from slugify import slugify
 import random
 from vercel_blob import put
+import tempfile
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
@@ -104,14 +105,12 @@ def save_file(title, file):
     except Exception as e:
         raise Exception(f"Error saving file to Vercel Blob: {str(e)}")
 
-
 @app.route('/')
 def index():
     try:
         return render_template('index.html')
     except Exception as e:
         return f"Error loading index: {str(e)}", 500
-
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -136,16 +135,13 @@ def upload_file():
     except Exception as e:
         return f"Upload failed: {str(e)}", 500
 
-
 @app.route('/download/<path:file_name>')
 def download_file(file_name):
     return "Use the provided Vercel Blob link directly.", 200
 
-
 # Jinja2 filter for timestamp formatting
 from datetime import datetime
 app.jinja_env.filters['datetime'] = lambda ts: datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-
 
 if __name__ == '__main__':
     app.run(debug=True)
