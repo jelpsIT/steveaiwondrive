@@ -3,7 +3,7 @@ import os
 import time
 from slugify import slugify
 import random
-import vercel_blob
+import vercel_blob import put
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
@@ -91,10 +91,10 @@ def save_file(title, file):
         
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
             temp_path = temp_file.name
-            file.save(temp_path)
-        
-        with open(temp_path, 'rb') as f:
-            file_content = f.read()
+            temp_file.write(file.read())
+            temp_file.flush()
+            temp_file.seek(0)
+            file_content = temp_file.read()
         
         blob = put(file_name, file_content, token=blob_token, access='public')
         
