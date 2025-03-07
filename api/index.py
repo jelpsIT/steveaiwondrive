@@ -3,7 +3,7 @@ import os
 import time
 from slugify import slugify
 import random
-from vercel_blob import put
+import vercel_blob
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
@@ -86,27 +86,22 @@ def save_file(title, file):
     try:
         title_slug = slugify(title)
         timestamp = int(time.time())
-        file_extension = file.filename.rsplit('.', 1)[-1].lower()  # Safer extension extraction
+        file_extension = file.filename.rsplit('.', 1)[-1].lower()
         file_name = f"{title_slug}-{timestamp}.{file_extension}"
-        temp_path = f"/tmp/{file_name}"
         
-        # Save the uploaded file temporarily
-        file.save(temp_path)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
+            temp_path = temp_file.name
+            file.save(temp_path)
         
-        # Upload to Vercel Blob
         with open(temp_path, 'rb') as f:
-            blob = put(file_name, f, {
-                'access': 'public',
-                'token': blob_token
-            })
+            file_content = f.read()
         
-        # Clean up temporary file
+        blob = put(file_name, file_content, token=blob_token, access='public')
+        
         os.remove(temp_path)
-        
         return blob['url'], timestamp
     
     except Exception as e:
-        # Generic exception handling since BlobError isn’t available
         raise Exception(f"Error saving file to Vercel Blob: {str(e)}")
 
 
