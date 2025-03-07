@@ -3,7 +3,7 @@ import os
 import time
 from slugify import slugify
 import random
-import vercel_blob import put
+from vercel_blob import put
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.config['SONG_FILE'] = 'song.mp3'
