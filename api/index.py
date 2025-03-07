@@ -100,7 +100,7 @@ def save_file(title, file):
             file_content = temp_file.read()
 
         # Upload to Vercel Blob without the 'token' argument
-        blob = put(file_name, file_content, access='public')
+        blob = put(file_name, file_content, {'access': 'public'})
 
         # Clean up temporary file
         os.remove(temp_path)
