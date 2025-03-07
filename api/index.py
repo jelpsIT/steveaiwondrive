@@ -109,14 +109,15 @@ def save_file(title, file):
         headers = {
             "Authorization": f"Bearer {blob_token}",
             "Content-Length": str(content_length),
-            "access": "public"  # Set access level as a header
+            "Content-Type": f"audio/{file_extension if file_extension == 'mp3' else 'mpeg'}",  # Adjust based on file type
         }
-        url = f"{BLOB_API_URL}{file_name}"
+        # Add access as a query parameter
+        url = f"{BLOB_API_URL}{file_name}?access=public"
         response = requests.put(url, data=file_content, headers=headers)
 
         # Check for success
         response.raise_for_status()  # Raises an exception for 4xx/5xx errors
-        blob_url = response.json().get('url', url)  # Use response URL if provided, else fallback
+        blob_url = response.json().get('url', url.split('?')[0])  # Use response URL, strip query param if fallback
 
         # Clean up temporary file
         os.remove(temp_path)
