@@ -3,6 +3,7 @@ import os
 import time
 from slugify import slugify
 import random
+import requests
 from vercel_blob import put
 import tempfile
 
@@ -13,6 +14,9 @@ app.config['SONG_FILE'] = 'song.mp3'
 blob_token = os.getenv('BLOB_READ_WRITE_TOKEN')
 if not blob_token:
     raise ValueError("BLOB_READ_WRITE_TOKEN environment variable is not set")
+    
+# Vercel Blob API base URL (adjust if your store has a custom URL)
+BLOB_API_URL = "https://blob.vercel-storage.com/"    
 
 song_titles = [
     # ===== OFFICIAL HITS =====
@@ -79,7 +83,6 @@ song_titles = [
     "melodica-moonwalk"
 ]
 
-
 def get_random_title():
     return random.choice(song_titles)
 
@@ -97,16 +100,27 @@ def save_file(title, file):
             temp_file.write(file.read())
             temp_file.flush()
             temp_file.seek(0)
-            file_content = temp_file.read()  # Read as bytes
-            content_length = len(file_content)
-            blob = put(file_name, file_content, {
-                'access': 'public',
-                'headers': {'Content-Length': str(content_length)}  # Hypothetical; adjust based on docs
-})
+            file_content = temp_file.read()  # Get bytes
+
+        # Calculate content length
+        content_length = len(file_content)
+
+        # Manually upload to Vercel Blob using requests
+        headers = {
+            "Authorization": f"Bearer {blob_token}",
+            "Content-Length": str(content_length),
+            "access": "public"  # Set access level as a header
+        }
+        url = f"{BLOB_API_URL}{file_name}"
+        response = requests.put(url, data=file_content, headers=headers)
+
+        # Check for success
+        response.raise_for_status()  # Raises an exception for 4xx/5xx errors
+        blob_url = response.json().get('url', url)  # Use response URL if provided, else fallback
 
         # Clean up temporary file
         os.remove(temp_path)
-        return blob['url'], timestamp
+        return blob_url, timestamp
 
     except Exception as e:
         raise Exception(f"Error saving file to Vercel Blob: {str(e)}")
