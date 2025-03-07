@@ -85,23 +85,27 @@ def get_random_title():
 
 def save_file(title, file):
     try:
+        # Generate a unique file name
         title_slug = slugify(title)
         timestamp = int(time.time())
         file_extension = file.filename.rsplit('.', 1)[-1].lower()
         file_name = f"{title_slug}-{timestamp}.{file_extension}"
-        
+
+        # Save file content temporarily
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
             temp_path = temp_file.name
             temp_file.write(file.read())
             temp_file.flush()
             temp_file.seek(0)
             file_content = temp_file.read()
-        
-        blob = put(file_name, file_content, token=blob_token, access='public')
-        
+
+        # Upload to Vercel Blob without the 'token' argument
+        blob = put(file_name, file_content, access='public')
+
+        # Clean up temporary file
         os.remove(temp_path)
         return blob['url'], timestamp
-    
+
     except Exception as e:
         raise Exception(f"Error saving file to Vercel Blob: {str(e)}")
 
